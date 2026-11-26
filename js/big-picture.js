@@ -9,6 +9,9 @@ const socialCaption = bigPicture.querySelector('.social__caption');
 const commentCount = bigPicture.querySelector('.social__comment-count');
 const commentsLoader = bigPicture.querySelector('.comments-loader');
 const cancelButton = bigPicture.querySelector('.big-picture__cancel');
+const COMMENTS_PER_PORTION = 5;
+let comments = [];
+let shownComments = 0;
 
 const createComment = (comment) => {
   const commentElement = document.createElement('li');
@@ -26,12 +29,25 @@ const createComment = (comment) => {
   return commentElement;
 };
 
-const renderComments = (comments) => {
+const renderComments = () => {
   const fragment = document.createDocumentFragment();
-  comments.forEach((comment) => {
+  const nextComments = comments.slice(
+    shownComments,
+    shownComments + COMMENTS_PER_PORTION
+  );
+  nextComments.forEach((comment) => {
     fragment.append(createComment(comment));
   });
-  socialComments.replaceChildren(fragment);
+  socialComments.append(fragment);
+  shownComments += nextComments.length;
+  commentCount.firstChild.textContent = `${shownComments} из `;
+  if (shownComments >= comments.length) {
+    commentsLoader.classList.add('hidden');
+  }
+};
+
+const onCommentsLoaderClick = () => {
+  renderComments();
 };
 
 const closeBigPicture = () => {
@@ -58,12 +74,16 @@ const openBigPicture = (photo) => {
   likesCount.textContent = photo.likes;
   commentsCount.textContent = photo.comments.length;
   socialCaption.textContent = photo.description;
-  renderComments(photo.comments);
-  commentCount.classList.add('hidden');
-  commentsLoader.classList.add('hidden');
+  comments = photo.comments;
+  shownComments = 0;
+  socialComments.replaceChildren();
+  commentCount.classList.remove('hidden');
+  commentsLoader.classList.remove('hidden');
+  renderComments();
   document.addEventListener('keydown', onDocumentKeydown);
 };
 
 cancelButton.addEventListener('click', onCancelButtonClick);
+commentsLoader.addEventListener('click', onCommentsLoaderClick);
 
 export { openBigPicture };
